@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Snake</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Press Start 2P', cursive;
+            background-color: #000;
+            color: #fff;
+            background-image: url('pixel_background.png'); /* Füge hier deinen Pixel-Hintergrund hinzu */
+            background-size: cover;
+        }
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px 20px;
+            text-align: center;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .home-button {
+            background-color: #00ff00;
+            color: #000;
+            border: 2px solid #fff;
+            padding: 5px 10px;
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            position: absolute;
+            left: 20px;
+            font-family: 'Press Start 2P', cursive; /* Retro-Schriftart */
+        }
+        .home-button:hover {
+            background-color: #fff;
+            color: #00ff00;
+        }
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+            margin-top: 60px; /* Platz für den festen Header */
+        }
+        canvas {
+            background-color: #333;
+            display: block;
+            margin: 20px 0;
+        }
+        #start-screen, #game-over-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #00ff00;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        #game-over-screen {
+            display: none;
+            flex-direction: column;
+        }
+        #nickname-input {
+            margin-top: 10px;
+            padding: 5px;
+            font-size: 16px;
+            text-align: center;
+        }
+        #highscores {
+            color: #00ff00;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .back-button {
+            background-color: #00ff00;
+            color: #000;
+            border: 2px solid #fff;
+            padding: 5px 10px;
+            text-decoration: none;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-family: 'Press Start 2P', cursive;
+        }
+        .back-button:hover {
+            background-color: #fff;
+            color: #00ff00;
+        }
+        footer {
+            background-color: #333;
+            padding: 10px 20px;
+            text-align: center;
+            box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <button class="home-button" onclick="goBack()">Home</button>
+        <h1 style="flex-grow: 1; text-align: center;">Snake</h1>
+    </header>
+    <div class="content">
+        <div id="start-screen">Zum Start tippen oder eine Taste drücken</div>
+        <div id="game-over-screen">
+            <div>Game Over</div>
+            <input type="text" id="nickname-input" maxlength="10" placeholder="Nickname eingeben">
+            <button onclick="saveHighscore()">Speichern</button>
+        </div>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        <div id="highscores"></div>
+        <button class="back-button" onclick="goBack()">Zurück</button>
+    </div>
+    <footer>
+        <p>© 2024 Spielplatz</p>
+    </footer>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const box = 20;
+        let snake = [{ x: 9 * box, y: 10 * box }];
+        let direction;
+        let food = { x: Math.floor(Math.random() * 19 + 1) * box, y: Math.floor(Math.random() * 19 + 1) * box };
+        let score = 0;
+        let speed = 200;
+        let game;
+        let highscores = JSON.parse(localStorage.getItem('highscores')) || [];
+
+        document.addEventListener('keydown', function(event) {
+            if (event.keyCode == 37 && direction != 'RIGHT') direction = 'LEFT';
+            else if (event.keyCode == 38 && direction != 'DOWN') direction = 'UP';
+            else if (event.keyCode == 39 && direction != 'LEFT') direction = 'RIGHT';
+            else if (event.keyCode == 40 && direction != 'UP') direction = 'DOWN';
+            if (document.getElementById('start-screen').style.display !== 'none') startGame();
+        });
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        canvas.addEventListener('touchstart', function(event) {
+            touchStartX = event.touches[0].clientX;
+            touchStartY = event.touches[0].clientY;
+        });
+
+        canvas.addEventListener('touchmove', function(event) {
+            let touchEndX = event.touches[0].clientX;
+            let touchEndY = event.touches[0].clientY;
+            let diffX = touchEndX - touchStartX;
+            let diffY = touchEndY - touchStartY;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 0 && direction != 'LEFT') direction = 'RIGHT';
+                else if (diffX < 0 && direction != 'RIGHT') direction = 'LEFT';
+            } else {
+                if (diffY > 0 && direction != 'UP') direction = 'DOWN';
+                else if (diffY < 0 && direction != 'DOWN') direction = 'UP';
+            }
+        });
+
+        function collision(newHead, snake) {
+            for (let i = 0; i < snake.length; i++) {
+                if (newHead.x == snake[i].x && newHead.y == snake[i].y) return true;
+            }
+            return false;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = (i == 0) ? '#00ff00' : '#fff';
+                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+                ctx.strokeStyle = '#000';
+                ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+            }
+
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath();
+            ctx.arc(food.x + box / 2, food.y + box / 2, box / 2, 0, 2 * Math.PI);
+            ctx.fill();
+
+            let snakeX = snake[0].x;
+            let snakeY = snake[0].y;
+
+            if (direction == 'LEFT') snakeX -= box;
+            if (direction == 'UP') snakeY -= box;
+            if (direction == 'RIGHT') snakeX += box;
+            if (direction == 'DOWN') snakeY += box;
+
+            if (snakeX == food.x && snakeY == food.y) {
+                score += 10;  // Punkte pro Apfel auf 10 erhöhen
+                speed = Math.max(50, speed - 5);
+                clearInterval(game);
+                game = setInterval(draw, speed);
+                food = { x: Math.floor(Math.random() * 19 + 1) * box, y: Math.floor(Math.random() * 19 + 1) * box };
+            } else {
+                snake.pop();
+            }
+
+            let newHead = { x: snakeX, y: snakeY };
+
+            if (snakeX < 0 || snakeY < 0 || snakeX >= canvas.width || snakeY >= canvas.height || collision(newHead, snake)) {
+                clearInterval(game);
+                document.getElementById('game-over-screen').style.display = 'flex';
+            }
+
+            snake.unshift(newHead);
+
+            ctx.fillStyle = '#fff';
+            ctx.font = '16px "Press Start 2P"';
+            ctx.fillText('Score: ' + score, 10, canvas.height - 10);
+        }
+
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            direction = 'RIGHT';
+            game = setInterval(draw, speed);
+        }
+
+        function saveHighscore() {
+            let nickname = document.getElementById('nickname-input').value;
+            if (nickname.length > 0) {
+                highscores.push({ nickname: nickname, score: score });
+                highscores.sort((a, b) => b.score - a.score);
+                highscores = highscores.slice(0, 10);
+                localStorage.setItem('highscores', JSON.stringify(highscores));
+                displayHighscores();
+                document.getElementById('game-over-screen').style.display = 'none';
+                resetGame();
+            }
+        }
+
+        function displayHighscores() {
+            let highscoreDiv = document.getElementById('highscores');
+            highscoreDiv.innerHTML = '<h3>Highscores</h3><ol>' + highscores.map(hs => `<li>${hs.nickname} - ${hs.score}</li>`).join('') + '</ol>';
+        }
+
+        function resetGame() {
+            snake = [{ x: 9 * box, y: 10 * box }];
+            direction = null;
+            score = 0;
+            speed = 200;
+            document.getElementById('start-screen').style.display = 'flex';
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+
+        document.getElementById('start-screen').addEventListener('click', startGame);
+        displayHighscores();
+    </script>
+</body>
+</html>
