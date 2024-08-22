@@ -1,0 +1,94 @@
+:root {
+    --main-bg-color: #000;
+    --main-text-color: #fff;
+    --border-color: #000;
+    --button-bg-color: #ffcc00;
+    --button-text-color: #000;
+    --button-border-color: #ff6600;
+}
+
+body {
+    background-color: var(--main-bg-color);
+    color: var(--main-text-color);
+    font-family: 'Press Start 2P', cursive;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+header, footer {
+    text-align: center;
+    margin: 10px 0;
+}
+
+canvas#gameCanvas {
+    display: block;
+    border: 5px solid var(--border-color); /* Rahmen hinzugefügt */
+    margin: 0 auto;
+    background-color: #111;
+}
+
+#startScreen, #levelScreen, #gameOverScreen, #highScores {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+#startButton, #submitScoreButton {
+    background-color: var(--button-bg-color);
+    color: var(--button-text-color);
+    border: 2px solid var(--button-border-color);
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    font-family: 'Press Start 2P', cursive;
+    text-transform: uppercase;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+#startButton:hover, #submitScoreButton:hover {
+    background-color: var(--button-border-color);
+    color: var(--button-bg-color);
+}
+
+#nicknameInput {
+    padding: 10px;
+    font-size: 16px;
+    margin: 10px 0;
+    font-family: 'Press Start 2P', cursive;
+}
+
+main {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+canvas#gameCanvas {
+    display: block;
+    border: 5px solid var(--border-color); /* Rahmen hinzugefügt */
+    margin: 0 auto;
+    background-color: #111;
+}
+
+.sidebar {
+    width: 200px;
+    margin-left: 20px;
+    color: var(--main-text-color);
+    font-family: 'Press Start 2P', cursive;
+}
+
+#highScores {
+    display: block; /* Sichtbar machen */
+}
+
+
+#highScores {
+    display: block; /* Sichtbar machen */
+}
+
